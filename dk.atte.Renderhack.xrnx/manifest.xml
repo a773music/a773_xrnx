@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RenoiseScriptingTool doc_version="0">
+  <ApiVersion>4</ApiVersion>
+  <AutoUpgraded>true</AutoUpgraded>
+  <Id>dk.atte.Renderhack</Id>
+  <Version>1.0</Version>
+  <Author>atte | atte.jensen@gmail.com</Author>
+  <Name>RenderHack</Name>
+  <Category>In Progress</Category>
+  <Description>Renders to file and exits</Description>
+  <Homepage>http://atte.dk</Homepage>
+</RenoiseScriptingTool>
