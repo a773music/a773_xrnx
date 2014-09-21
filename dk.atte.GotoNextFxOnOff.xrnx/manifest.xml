@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RenoiseScriptingTool doc_version="0">
   <Name>GotoNextFxOnOff</Name>
-  <Id>dk.atte.Gotonextfxonoff</Id>
+  <Id>dk.atte.GotoNextFxOnOff</Id>
   <Version>0.1</Version>
   <ApiVersion>4</ApiVersion>
   <Author>Atte André Jensen | atte.jensen@gmail.com</Author>
