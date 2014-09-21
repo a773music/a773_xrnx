@@ -1,1 +1,1 @@
-Various tools for renoise
+Various tools for renoise written in Lua
