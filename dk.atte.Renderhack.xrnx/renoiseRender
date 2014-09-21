@@ -1,0 +1,58 @@
+#!/bin/bash
+hackFile=~/renderHack
+renoise='renoise'
+#renoise='renoise-2.7.2'
+
+
+
+if [ -z "$1" ]; then
+        echo "usage: $(basename $0) infile1.xrns [infile2.xrns...] [outputdir]"
+        exit
+fi
+
+last_arg="${@: -1}"
+
+for file in "$@"; do
+    if [ ! -f "$file" ]; then
+	echo file "$file" doesnt exist, skipping...
+	continue
+    fi
+
+    pushd ~/.renoise
+    ./remove_crash_backups
+    popd
+
+    touch $hackFile
+    xrns=$(readlink -f "$file")
+    xrns=`pwd`/"$file"
+    wav=`echo $xrns | sed s/xrns$/wav/g`
+
+    #echo $xrns
+    #exit
+
+    $renoise "$xrns" &
+    while [ -f $hackFile ]; do
+	sleep 1
+    done
+
+    sleep 1
+
+
+    sndfile-convert -pcm16 "$wav" __tmp__.wav
+    mv __tmp__.wav "$wav"
+
+
+#    while [ -n "`ps aux | grep renoise | grep -v renoiseRender | grep -v grep`" ]; do
+	killall renoise
+	sleep 1
+	killall -HUP renoise
+#	sleep 1
+#    done
+
+
+    if [ -d "$last_arg" ]; then
+	outdir=$(readlink -f "$last_arg")/
+	mv "$wav" $outdir
+    fi
+
+done
