@@ -1,1 +1,3 @@
 * search both current track (current) and whole song
+* release focus/cpu
+* faster!
