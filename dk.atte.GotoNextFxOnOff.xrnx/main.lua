@@ -31,8 +31,9 @@ local tool_id = manifest:property("Id").value
 
 
 local function fx_device(fx)
-   local device = string.sub(tostring(fx),1,1)
-   if device == '1' then return 1
+   local device = string.sub(fx,1,1)
+   if device == '0' then return 10000
+   elseif device == '1' then return 1
    elseif device == '2' then return 2
    elseif device == '3' then return 3
    elseif device == '4' then return 4
@@ -64,25 +65,50 @@ local function fx_device(fx)
 end
       
    
+local function effect_column_has_on_off(effect_column,dev_count)
+   if effect_column.is_empty then
+      return false
+   end
+   
+   local fx = tostring(effect_column)
+
+   local dev = string.sub(fx,1,1)
+   if fx_device(dev) > dev_count then
+      return false
+   end
+
+   local val = string.sub(fx,3)
+   if val ~= '00' and val ~= '01' then
+      return false
+   end
+
+   if string.sub(fx,2,2) ~= '0' then
+      return false
+   end
+
+   return true
+end
 
 
-local function line_has_device_on_off(pattern,track,line)
+local function line_has_device_on_off_(pattern,track,dev_count,line)
    if renoise.song().patterns[pattern].tracks[track].lines[line].is_empty then
       return false
    end
 
-   local dev_count = #renoise.song().tracks[track].devices
-
    if dev_count<  2 then
       return false
    end
-      
-   for col = 1,8 do
-      local fx = renoise.song().patterns[pattern].tracks[track].lines[line]:effect_column(col)
-      local dev = string.sub(tostring(fx),1,1)
-      local val = string.sub(tostring(fx),3)
+   
+   local all_empty = true
 
-      if (val == '01' or val == '00') and (string.sub(tostring(fx),2,2) == '0') and fx_device(dev) <= dev_count then
+
+   local fx
+   local dev
+   local val
+
+
+   for i,effect_column in pairs(renoise.song().patterns[pattern].tracks[track].lines[line].effect_columns) do
+      if effect_column_has_on_off(effect_column,dev_count) then
 	 return true
       end
    end
@@ -90,8 +116,28 @@ local function line_has_device_on_off(pattern,track,line)
    return false
 end
 
+local function col_has_fx_on_off(fx_col,dev_count)
+   if fx_col.is_empty then
+      return false
+   end
 
-local function goto(pattern,track,line)
+   if dev_count<  2 then
+      return false
+   end
+   
+   local fx
+   local dev
+   local val
+
+   if effect_column_has_on_off(fx_col,dev_count) then
+      return true
+   end
+
+   return false
+end
+
+
+local function goto(pattern,line)
    renoise.song().selected_sequence_index = pattern
    renoise.song().selected_line_index = line
 end
@@ -128,52 +174,54 @@ end
    
 
 local function find_next_onoff()
+   local pos = renoise.song().transport.edit_pos
+   
    local start_track = renoise.song().selected_track_index
    local start_pattern = renoise.song().selected_pattern_index
-   local start_seq = renoise.song().selected_sequence_index
-   local start_line = renoise.song().selected_line_index
+   --local start_seq = renoise.song().selected_sequence_index
+   local start_line = pos.line
    local track = start_track
 
-   -- print 'first run....'
-   for pattern_seq = 1, #renoise.song().sequencer.pattern_sequence do
-      local pattern = renoise.song().sequencer.pattern_sequence[pattern_seq]
-      if pattern >= start_pattern then
-	 for line = 1, renoise.song().patterns[pattern].number_of_lines do
-	    if pattern ~= start_pattern or line > start_line then
-	       if line_has_device_on_off(pattern,track,line) then
-		  goto(pattern_seq,track,line)
-		  return
-	       end
-	    end
+
+   local nb_devices = #renoise.song().tracks[track].devices
+
+   local is_first = true
+   local first_pattern
+   local first_line
+
+   for pos, fx_col in renoise.song().pattern_iterator:effect_columns_in_track(track) do
+      if col_has_fx_on_off(fx_col,nb_devices) then
+	 if is_first then
+	    first_pattern = pos.pattern
+	    first_line = pos.line
+	    is_first = false
+	 end
+	 if ((pos.pattern == start_pattern) and (pos.line > start_line)) or (pos.pattern > start_pattern) then
+	    goto(pos.pattern,pos.line)
+	    return
 	 end
       end
    end
-
-   -- print 'second run....'
-   for pattern_seq = 1, #renoise.song().sequencer.pattern_sequence do
-      local pattern = renoise.song().sequencer.pattern_sequence[pattern_seq]
-      if pattern <= start_pattern then
-	 for line = 1, renoise.song().patterns[pattern].number_of_lines do
-	    if pattern ~= start_pattern or line <= start_line then
-	       if line_has_device_on_off(pattern,track,line) then
-		  goto(pattern_seq,track,line)
-		  return
-	       end
-	    end
-	 end
-      end
+   
+   if not is_first then
+      goto(first_pattern,first_line)
+      return
    end
-
+	    
    not_found()
 end
+
+
+
+
 
 --------------------------------------------------------------------------------
 -- Menu entries
 --------------------------------------------------------------------------------
 
 renoise.tool():add_menu_entry {
-  name = "Main Menu:Tools:"..tool_name.."...",
-  invoke = find_next_onoff
+   name = "Main Menu:Tools:"..tool_name.."...",
+   invoke = find_next_onoff
 }
 
 
