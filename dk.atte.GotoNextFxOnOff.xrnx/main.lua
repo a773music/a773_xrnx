@@ -219,8 +219,16 @@ end
 -- Menu entries
 --------------------------------------------------------------------------------
 
+--[[
 renoise.tool():add_menu_entry {
    name = "Main Menu:Tools:"..tool_name.."...",
+   invoke = find_next_onoff
+}
+--]]
+
+
+renoise.tool():add_menu_entry {
+   name = "Pattern Editor:Track:"..tool_name.."...",
    invoke = find_next_onoff
 }
 
@@ -229,12 +237,10 @@ renoise.tool():add_menu_entry {
 -- Key Binding
 --------------------------------------------------------------------------------
 
---[[
 renoise.tool():add_keybinding {
   name = "Global:Tools:" .. tool_name.."...",
-  invoke = show_dialog
+  invoke = find_next_onoff
 }
---]]
 
 
 --------------------------------------------------------------------------------

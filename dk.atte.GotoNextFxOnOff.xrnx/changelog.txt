@@ -1,3 +1,7 @@
+--- Version 0.12 - 2014-09-26 ---
+* moved to pattern editor->track
+* added keybinding
+
 --- Version 0.11 - 2014-09-25 ---
 * massive performance enhancement
 

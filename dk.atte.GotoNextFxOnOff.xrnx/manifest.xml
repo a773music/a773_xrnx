@@ -2,11 +2,11 @@
 <RenoiseScriptingTool doc_version="0">
   <Name>GotoNextFxOnOff</Name>
   <Id>dk.atte.GotoNextFxOnOff</Id>
-  <Version>0.11</Version>
+  <Version>0.12</Version>
   <ApiVersion>4</ApiVersion>
   <Author>Atte André Jensen | atte.jensen@gmail.com</Author>
   <AutoUpgraded>false</AutoUpgraded>
-  <Category>In Progress</Category>
+  <Category>Device, Cleanup</Category>
   <Description>Seek to next instance of turning a device on/off with effect command</Description>
   <Homepage>http://github.com/attejensen/xrnx</Homepage>
   <Platform/>
