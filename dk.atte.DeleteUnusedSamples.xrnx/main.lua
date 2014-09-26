@@ -101,10 +101,10 @@ local function map_in(instrument_index,map,notes)
 end
 
 local function delete_unused_samples(instrument_nb, instrument, notes_in_song)
-   local did_delete = false
+   local deleted = 0
 
    if instrument_is_empty(instrument) then
-      return
+      return 0
    end
 
 
@@ -115,7 +115,7 @@ local function delete_unused_samples(instrument_nb, instrument, notes_in_song)
 
 	       if not map_in(instrument_nb,one_map,notes_in_song) then
 		  one_map.sample:clear()
-		  did_delete = true
+		  deleted = deleted + 1
 		  --renoise.song().instruments:delete_sample_mapping_at('LAYER_NOTE_ON', i)
 	       end
 	    end
@@ -123,11 +123,19 @@ local function delete_unused_samples(instrument_nb, instrument, notes_in_song)
       end
    end
    
-   return did_delete
+   return deleted
 end
 
 
-local function all_samples_used()
+local function count(table)
+   local count = 0
+   for _ in pairs(table) do
+      count = count + 1
+   end
+   return count
+end
+
+local function report(deleted)
    if dialog and dialog.visible then
       dialog:show()
       return
@@ -135,10 +143,20 @@ local function all_samples_used()
    
    vb = renoise.ViewBuilder()
    
+   local text_to_show = 'All samples used, none deleted...'
+
+   if deleted ~= nil and count(deleted) > 0 then
+      text_to_show = 'The following number of unused samples were deleted:\n'
+      for instrument_name, nb_samples in pairs(deleted) do
+	 text_to_show = text_to_show..instrument_name..': '..tostring(nb_samples)..'\n'
+      end
+   end
+   
+
    local content = vb:column {
       margin = 10,
       vb:text {
-	 text = 'All samples used, none deleted...'
+	 text = text_to_show
       }
    } 
    
@@ -154,8 +172,8 @@ end
 
 
 local function delete_all_unused_samples()
-   local did_delete = false
-
+   local deleted = {}
+   local nb_deleted
    --local start_time
    --start_time = os.clock()
    local notes_in_song = get_notes_in_song()
@@ -164,16 +182,15 @@ local function delete_all_unused_samples()
    
    --start_time = os.clock()
    for i, instrument in pairs(renoise.song().instruments) do
-      if delete_unused_samples(i,instrument,notes_in_song) then
-	 did_delete = true
+      --print(instrument.name)
+      nb_deleted = delete_unused_samples(i,instrument,notes_in_song)
+      if nb_deleted > 0 then
+	 deleted[instrument.name] = nb_deleted
       end
    end
    --print(os.clock() - start_time)
-   
-   if not did_delete then
-      all_samples_used()
-   end
-      
+
+   report(deleted)
 end
 --------------------------------------------------------------------------------
 -- Menu entries
