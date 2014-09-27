@@ -184,16 +184,13 @@ local function delete_all_unused_samples()
    
    --start_time = os.clock()
    for i, instrument in pairs(renoise.song().instruments) do
-<<<<<<< HEAD
       nb_deleted = delete_unused_samples(i,instrument,notes_in_song)
       if nb_deleted > 0 then
 	 deleted[string.format("%02d",i-1)..' '..instrument.name] = nb_deleted
-=======
-      --print(instrument.name)
-      nb_deleted = delete_unused_samples(i,instrument,notes_in_song)
-      if nb_deleted > 0 then
-	 deleted[instrument.name] = nb_deleted
->>>>>>> 1d8dcccf774fb8f619919e64c090a65361803426
+	 nb_deleted = delete_unused_samples(i,instrument,notes_in_song)
+	 if nb_deleted > 0 then
+	    deleted[instrument.name] = nb_deleted
+	 end
       end
    end
    --print(os.clock() - start_time)
