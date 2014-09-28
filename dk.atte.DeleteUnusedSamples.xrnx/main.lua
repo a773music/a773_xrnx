@@ -186,7 +186,7 @@ local function delete_all_unused_samples()
    for i, instrument in pairs(renoise.song().instruments) do
       nb_deleted = delete_unused_samples(i,instrument,notes_in_song)
       if nb_deleted > 0 then
-	 deleted[string.format("%02d",i-1)..' '..instrument.name] = nb_deleted
+	 deleted[string.format("%02X",i-1)..' '..instrument.name] = nb_deleted
 	 nb_deleted = delete_unused_samples(i,instrument,notes_in_song)
 	 if nb_deleted > 0 then
 	    deleted[instrument.name] = nb_deleted
