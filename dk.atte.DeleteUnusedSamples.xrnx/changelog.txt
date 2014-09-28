@@ -1,2 +1,5 @@
+--- Version 0.11 - 2014-09-26 ---
+* report dialog now formats instrument number in hex
+
 --- Version 0.10 - 2014-09-26 ---
 * initial release

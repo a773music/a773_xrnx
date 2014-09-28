@@ -37,6 +37,9 @@ local function get_notes_in_song()
 	       local instrument = column.instrument_value + 1
 	       local note = column.note_value
 	       local volume = column.volume_value
+	       if volume == 128 or volume == 255 then
+		  volume = 127
+	       end
 	       if notes[instrument] == nil then
 		  notes[instrument] = {[note] = {[volume] = true}}
 	       else
@@ -112,8 +115,7 @@ local function delete_unused_samples(instrument_nb, instrument, notes_in_song)
       if #map > 0 then
 	 for j,one_map in pairs(map) do
 	    if not one_map.read_only then
-
-	       if not map_in(instrument_nb,one_map,notes_in_song) then
+	       if not map_in(instrument_nb,one_map,notes_in_song) and one_map.sample.sample_buffer.has_sample_data then
 		  one_map.sample:clear()
 		  deleted = deleted + 1
 		  --renoise.song().instruments:delete_sample_mapping_at('LAYER_NOTE_ON', i)
@@ -182,10 +184,13 @@ local function delete_all_unused_samples()
    
    --start_time = os.clock()
    for i, instrument in pairs(renoise.song().instruments) do
-      --print(instrument.name)
       nb_deleted = delete_unused_samples(i,instrument,notes_in_song)
       if nb_deleted > 0 then
-	 deleted[instrument.name] = nb_deleted
+	 deleted[string.format("%02X",i-1)..' '..instrument.name] = nb_deleted
+	 nb_deleted = delete_unused_samples(i,instrument,notes_in_song)
+	 if nb_deleted > 0 then
+	    deleted[instrument.name] = nb_deleted
+	 end
       end
    end
    --print(os.clock() - start_time)
