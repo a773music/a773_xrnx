@@ -16,11 +16,11 @@ end
 
 -- Read from the manifest.xml file.
 class "RenoiseScriptingTool" (renoise.Document.DocumentNode)
-  function RenoiseScriptingTool:__init()    
-    renoise.Document.DocumentNode.__init(self) 
-    self:add_property("Name", "Untitled Tool")
-    self:add_property("Id", "Unknown Id")
-  end
+function RenoiseScriptingTool:__init()    
+   renoise.Document.DocumentNode.__init(self) 
+   self:add_property("Name", "Untitled Tool")
+   self:add_property("Id", "Unknown Id")
+end
 
 local manifest = RenoiseScriptingTool()
 local ok,err = manifest:load_from("manifest.xml")
@@ -28,26 +28,123 @@ local tool_name = manifest:property("Name").value
 local tool_id = manifest:property("Id").value
 
 
-local function get_notes_in_song()
-   local notes = {}
+
+
+local function add_note_to_notes(notes,instrument,note,volume)
+   --if volume == 128 or volume == 255 then
+   if volume == 128 then
+      volume = 127
+   end
+   if notes[instrument] == nil then
+      notes[instrument] = {[note] = {[volume] = true}}
+   else
+      if notes[instrument][note] == nil then
+	 notes[instrument][note] = {[volume] = true}
+      else
+	 if notes[instrument][note][volume] == nil then
+	    notes[instrument][note][volume] = true
+	 end
+      end
+   end
+end
+
+
+local function get_ticks_per_line(col)
+   if col.is_empty then return end
+
+   local col_string = tostring(col)
+   if string.sub(col_string,1,2) == 'ZK' then
+      return tonumber(string.sub(col_string,3,4),16)
+   end
+end
+
+
+
+local function get_retrigger_vols(col,vol,ticks_per_line)
+   --[[
+   0Rxy - Retrigger note every y ticks with volume x, where x represents:
+   
+   0 No volume change
+   1 -1/32
+   2 -1/16
+   3 -1/8
+   4 -1/4
+   5 -1/2
+   6 *2/3
+   7 *1/2
+   8 No change
+   9 +1/32
+   A +1/16
+   B +1/8
+   C +1/4
+   D +1/2
+   E *3/2
+   F *2
+   --]]
+   if col.is_empty then return end
+
+   local col_string = tostring(col)
+   if string.sub(col_string,1,2) ~= '0R' then
+      return
+   end
+
+   local x = tonumber(string.sub(col_string,3,3),16)
+   local y = tonumber(string.sub(col_string,4),16)
+   
+   --print('in_get_retrigger_vols')
+   print('x:'..tostring(x)..' y:'..tostring(y)..' tick/line:'..tostring(ticks_per_line)..' vol:'..tostring(vol))
+   
+   return tonumber(string.sub(col_string,3,4),16)
+end
+
+--[[
+local function handle_retriggers(notes)
+   local ticks_per_line = 12
+   local ticks_test, retrigger_test
+   for pos, col in renoise.song().pattern_iterator:effect_columns_in_song() do
+      if not col.is_empty then
+	 ticks_test = get_ticks_per_line(col)
+	 if ticks_test ~= nil then
+	    ticks_per_line = ticks_test
+	 end
+
+	 retrigger_test = get_retrigger(col)
+	 print('retrigger_test:')
+	 print(retrigger_test)
+      end
+   end
+end
+--]]
+
+local function get_notes_in_song(notes)
+   local ticks_per_line = 12
+   local ticks_test, retrigger
+
    for pos, line in renoise.song().pattern_iterator:lines_in_song() do
       if not line.is_empty then
 	 for _,column in pairs(line.note_columns) do
 	    if not column.is_empty then
+	       
 	       local instrument = column.instrument_value + 1
 	       local note = column.note_value
 	       local volume = column.volume_value
-	       if volume == 128 or volume == 255 then
-		  volume = 127
+	       if volume == 255 then
+		  volume = 128
 	       end
-	       if notes[instrument] == nil then
-		  notes[instrument] = {[note] = {[volume] = true}}
-	       else
-		  if notes[instrument][note] == nil then
-		     notes[instrument][note] = {[volume] = true}
-		  else
-		     if notes[instrument][note][volume] == nil then
-			notes[instrument][note][volume] = true
+	       
+	       add_note_to_notes(notes,instrument,note,volume)
+	       if not line.effect_columns.is_empty then
+		  for _,fx in pairs(line.effect_columns) do
+		     if not fx.is_empty then
+			ticks_test = get_ticks_per_line(fx)
+			if ticks_test ~= nil then
+			   ticks_per_line = ticks_test
+			end
+			retrigger = get_retrigger_vols(fx,volume,ticks_per_line)
+			if retrigger ~= nil then
+			   --print('retrigger:'..tostring(retrigger))
+			   --print('volume:'..tostring(volume))
+			end
 		     end
 		  end
 	       end
@@ -78,7 +175,7 @@ local function map_in(instrument_index,map,notes)
    if notes[instrument_index] == nil then
       return false
    end
-
+   
    local note_used = false
    
    for note_played,vels in pairs(notes[instrument_index]) do
@@ -94,23 +191,23 @@ local function map_in(instrument_index,map,notes)
 	 end
       end
    end
-
+   
    if not note_used then
       return false
    end
-
-
+   
+   
    return true
 end
 
 local function delete_unused_samples(instrument_nb, instrument, notes_in_song)
    local deleted = 0
-
+   
    if instrument_is_empty(instrument) then
       return 0
    end
-
-
+   
+   
    for i, map in pairs(instrument.sample_mappings) do
       if #map > 0 then
 	 for j,one_map in pairs(map) do
@@ -146,7 +243,7 @@ local function report(deleted)
    vb = renoise.ViewBuilder()
    
    local text_to_show = 'All samples used, none deleted...'
-
+   
    if deleted ~= nil and count(deleted) > 0 then
       text_to_show = 'The following number of unused samples were deleted:\n'
       for instrument_name, nb_samples in pairs(deleted) do
@@ -154,7 +251,7 @@ local function report(deleted)
       end
    end
    
-
+   
    local content = vb:column {
       margin = 10,
       vb:text {
@@ -174,11 +271,16 @@ end
 
 
 local function delete_all_unused_samples()
+   local notes_in_song = {}
    local deleted = {}
    local nb_deleted
+
+   print '------------'
+   
+   get_notes_in_song(notes_in_song)
    --local start_time
    --start_time = os.clock()
-   local notes_in_song = get_notes_in_song()
+   --handle_retriggers(notes_in_song)
    --print(os.clock() - start_time)
    
    
@@ -194,7 +296,7 @@ local function delete_all_unused_samples()
       end
    end
    --print(os.clock() - start_time)
-
+   
    report(deleted)
 end
 --------------------------------------------------------------------------------
@@ -202,8 +304,8 @@ end
 --------------------------------------------------------------------------------
 
 renoise.tool():add_menu_entry {
-  name = "Main Menu:Tools:"..tool_name.."...",
-  invoke = delete_all_unused_samples
+   name = "Main Menu:Tools:"..tool_name.."...",
+   invoke = delete_all_unused_samples
 }
 
 
@@ -213,8 +315,8 @@ renoise.tool():add_menu_entry {
 
 --[[
 renoise.tool():add_keybinding {
-  name = "Global:Tools:" .. tool_name.."...",
-  invoke = show_dialog
+   name = "Global:Tools:" .. tool_name.."...",
+   invoke = show_dialog
 }
 --]]
 
@@ -225,7 +327,7 @@ renoise.tool():add_keybinding {
 
 --[[
 renoise.tool():add_midi_mapping {
-  name = tool_id..":Show Dialog...",
-  invoke = show_dialog
+   name = tool_id..":Show Dialog...",
+   invoke = show_dialog
 }
 --]]
