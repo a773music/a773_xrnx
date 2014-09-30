@@ -90,11 +90,30 @@ local function get_retrigger_vols(col,vol,ticks_per_line)
 
    local x = tonumber(string.sub(col_string,3,3),16)
    local y = tonumber(string.sub(col_string,4),16)
+   local nb_retrigs = ticks_per_line / y
    
-   --print('in_get_retrigger_vols')
+   print('nb_retrigs:'..tostring(nb_retrigs))
    print('x:'..tostring(x)..' y:'..tostring(y)..' tick/line:'..tostring(ticks_per_line)..' vol:'..tostring(vol))
+
+   local vols = {}
+
+   --vol = vol - 1
+   if x == 0 then
+      return 
+   elseif x== 1 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = vol - (i * (math.floor(vol)/32))
+      end
+   elseif x== 4 then
+      for i = 1,(nb_retrigs-1) do
+	 print(math.ceil(vol/4))
+	 vols[i] = vol - (i * math.floor(vol * .25))
+      end
+   end
    
-   return tonumber(string.sub(col_string,3,4),16)
+   print('vols:')
+   rprint(vols)
+   return vols
 end
 
 --[[
@@ -142,8 +161,10 @@ local function get_notes_in_song(notes)
 			end
 			retrigger = get_retrigger_vols(fx,volume,ticks_per_line)
 			if retrigger ~= nil then
-			   --print('retrigger:'..tostring(retrigger))
-			   --print('volume:'..tostring(volume))
+			   for _,retrig_volume in pairs(retrigger) do
+			      print('retrigger_volume:'..tostring(retrig_volume))
+			      add_note_to_notes(notes,instrument,note,retrig_volume)
+			   end
 			end
 		     end
 		  end
