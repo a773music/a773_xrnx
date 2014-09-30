@@ -59,6 +59,14 @@ local function get_ticks_per_line(col)
 end
 
 
+local function round(value)
+   if value - math.floor(value) < 0.5 then
+      return math.floor(value)
+   else
+      return math.ceil(value)
+   end
+end
+
 
 local function get_retrigger_vols(col,vol,ticks_per_line)
    --[[
@@ -92,22 +100,20 @@ local function get_retrigger_vols(col,vol,ticks_per_line)
    local y = tonumber(string.sub(col_string,4),16)
    local nb_retrigs = ticks_per_line / y
    
-   print('nb_retrigs:'..tostring(nb_retrigs))
-   print('x:'..tostring(x)..' y:'..tostring(y)..' tick/line:'..tostring(ticks_per_line)..' vol:'..tostring(vol))
+   --print('nb_retrigs:'..tostring(nb_retrigs))
+   --print('x:'..tostring(x)..' y:'..tostring(y)..' tick/line:'..tostring(ticks_per_line)..' vol:'..tostring(vol))
 
    local vols = {}
 
-   --vol = vol - 1
    if x == 0 then
       return 
    elseif x== 1 then
       for i = 1,(nb_retrigs-1) do
-	 vols[i] = vol - (i * (math.floor(vol)/32))
+	 vols[i] = round(vol - (i * 127/32))
       end
    elseif x== 4 then
       for i = 1,(nb_retrigs-1) do
-	 print(math.ceil(vol/4))
-	 vols[i] = vol - (i * math.floor(vol * .25))
+	 vols[i] = round(vol - (i * 127/4))
       end
    end
    
@@ -116,24 +122,7 @@ local function get_retrigger_vols(col,vol,ticks_per_line)
    return vols
 end
 
---[[
-local function handle_retriggers(notes)
-   local ticks_per_line = 12
-   local ticks_test, retrigger_test
-   for pos, col in renoise.song().pattern_iterator:effect_columns_in_song() do
-      if not col.is_empty then
-	 ticks_test = get_ticks_per_line(col)
-	 if ticks_test ~= nil then
-	    ticks_per_line = ticks_test
-	 end
 
-	 retrigger_test = get_retrigger(col)
-	 print('retrigger_test:')
-	 print(retrigger_test)
-      end
-   end
-end
---]]
 
 local function get_notes_in_song(notes)
    local ticks_per_line = 12
@@ -162,7 +151,7 @@ local function get_notes_in_song(notes)
 			retrigger = get_retrigger_vols(fx,volume,ticks_per_line)
 			if retrigger ~= nil then
 			   for _,retrig_volume in pairs(retrigger) do
-			      print('retrigger_volume:'..tostring(retrig_volume))
+			      --print('retrigger_volume:'..tostring(retrig_volume))
 			      add_note_to_notes(notes,instrument,note,retrig_volume)
 			   end
 			end
