@@ -1,5 +1,4 @@
-* work with retrigger
-  (http://forum.renoise.com/index.php/topic/41015-removed-delete-unused-samples-and-retrigger-commands/)
+* make retrigger work without note
 * remove mappings as well
 * de-cripple
 * note-off layers?????
