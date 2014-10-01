@@ -1,1 +1,2 @@
 * search both current track (current) and whole song
+* filter for devices
