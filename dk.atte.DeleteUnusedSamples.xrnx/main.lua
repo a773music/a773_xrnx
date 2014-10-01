@@ -105,20 +105,68 @@ local function get_retrigger_vols(col,vol,ticks_per_line)
 
    local vols = {}
 
-   if x == 0 then
+   if x == 0 or x == 8 then
       return 
    elseif x== 1 then
       for i = 1,(nb_retrigs-1) do
 	 vols[i] = round(vol - (i * 127/32))
       end
+   elseif x== 2 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = round(vol - (i * 127/16))
+      end
+   elseif x== 3 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = round(vol - (i * 127/8))
+      end
    elseif x== 4 then
       for i = 1,(nb_retrigs-1) do
 	 vols[i] = round(vol - (i * 127/4))
       end
+   elseif x== 5 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = round(vol - (i * 127/2))
+      end
+   elseif x== 6 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = round(vol * (i * 127 * 2/3))
+      end
+   elseif x== 7 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = round(vol * (i * 127 * 1/2))
+      end
+   elseif x== 9 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = round(vol + (i * 127/32))
+      end
+   elseif x== 10 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = round(vol + (i * 127/16))
+      end
+   elseif x== 11 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = round(vol + (i * 127/8))
+      end
+   elseif x== 12 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = round(vol + (i * 127/4))
+      end
+   elseif x== 13 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = round(vol + (i * 127/2))
+      end
+   elseif x== 14 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = round(vol * (i * 127 * 3/2))
+      end
+   elseif x== 15 then
+      for i = 1,(nb_retrigs-1) do
+	 vols[i] = round(vol * (i * 127 * 2))
+      end
    end
    
-   print('vols:')
-   rprint(vols)
+--   print('vols:')
+--   rprint(vols)
    return vols
 end
 
@@ -285,7 +333,7 @@ local function delete_all_unused_samples()
    local deleted = {}
    local nb_deleted
 
-   print '------------'
+   --print '------------'
    
    get_notes_in_song(notes_in_song)
    --local start_time
