@@ -32,9 +32,6 @@ local tool_id = manifest:property("Id").value
 
 local function add_note_to_notes(notes,instrument,note,volume)
    --if volume == 128 or volume == 255 then
-   if volume == 128 then
-      volume = 127
-   end
    if notes[instrument] == nil then
       notes[instrument] = {[note] = {[volume] = true}}
    else
@@ -100,9 +97,6 @@ local function get_retrigger_vols(col,vol,ticks_per_line)
    local y = tonumber(string.sub(col_string,4),16)
    local nb_retrigs = ticks_per_line / y
    
-   --print('nb_retrigs:'..tostring(nb_retrigs))
-   --print('x:'..tostring(x)..' y:'..tostring(y)..' tick/line:'..tostring(ticks_per_line)..' vol:'..tostring(vol))
-
    local vols = {}
 
    if x == 0 or x == 8 then
@@ -165,30 +159,42 @@ local function get_retrigger_vols(col,vol,ticks_per_line)
       end
    end
    
---   print('vols:')
---   rprint(vols)
+   --print('vols:')
+   --rprint(vols)
    return vols
 end
 
 
 
+
+
+
+
+
 local function get_notes_in_song(notes)
+   local nb_tracks = #renoise.song().tracks
    local ticks_per_line = 12
    local ticks_test, retrigger
 
-   for pos, line in renoise.song().pattern_iterator:lines_in_song() do
-      if not line.is_empty then
-	 for _,column in pairs(line.note_columns) do
-	    if not column.is_empty then
-	       
-	       local instrument = column.instrument_value + 1
-	       local note = column.note_value
-	       local volume = column.volume_value
-	       if volume == 255 then
-		  volume = 128
+   local instrument, note, volume
+
+   for track_index = 1,nb_tracks do
+      for pos, line in renoise.song().pattern_iterator:lines_in_track(track_index) do
+	 if not line.is_empty then
+	    for _,column in pairs(line.note_columns) do
+	       if not column.is_empty then
+		  
+		  instrument = column.instrument_value + 1
+		  note = column.note_value
+		  volume = column.volume_value
+		  --[[
+		  if volume == 255 or volume == 128 then
+		     volume = 127
+		  end
+		  --]]
+		  volume = math.min(volume,127)
+		  add_note_to_notes(notes,instrument,note,volume)
 	       end
-	       
-	       add_note_to_notes(notes,instrument,note,volume)
 	       if not line.effect_columns.is_empty then
 		  for _,fx in pairs(line.effect_columns) do
 		     if not fx.is_empty then
@@ -212,6 +218,7 @@ local function get_notes_in_song(notes)
    end
    return notes
 end
+
 
 local function instrument_is_empty(instrument)
    return #instrument.samples == 0

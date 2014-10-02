@@ -1,4 +1,4 @@
-* make retrigger work without note
+* test retrigger 
 * remove mappings as well
 * de-cripple
 * note-off layers?????
