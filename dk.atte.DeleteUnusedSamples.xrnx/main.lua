@@ -30,6 +30,67 @@ local tool_id = manifest:property("Id").value
 
 
 
+-- delay a function call by the given amount of time into a tools idle notifier
+--
+-- for example: ´OneShotIdleNotifier(100, my_callback, some_arg, another_arg)´
+-- calls "my_callback" with the given arguments with a delay of about 100 ms
+-- a delay of 0 will call the callback "as soon as possible" in idle, but never
+-- immediately
+
+class "OneShotIdleNotifier"
+
+function OneShotIdleNotifier:__init(delay_in_ms, callback, ...)
+   assert(type(delay_in_ms) == "number" and delay_in_ms >= 0.0)
+   assert(type(callback) == "function")
+
+ self._callback = callback
+ self._args = arg
+   self._invoke_time = os.clock() + delay_in_ms / 1000
+
+   renoise.tool().app_idle_observable:add_notifier(self, self.__on_idle)
+end
+
+function OneShotIdleNotifier:__on_idle()
+   if (os.clock() >= self._invoke_time) then
+      renoise.tool().app_idle_observable:remove_notifier(self, self.__on_idle)
+      self._callback(unpack(self._args))
+   end
+end
+
+
+
+
+
+
+--[[
+
+function tracks_changed(notification)
+   if (notification.type == "insert") then
+      OneShotIdleNotifier(0, function()
+				for i = 1, #renoise.song().sequencer.pattern_sequence - 1 do
+				   renoise.song().sequencer:set_track_sequence_slot_is_muted(notification.index , i, true)
+				end
+			     end)
+   end
+end
+
+
+
+--]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 local function add_note_to_notes(notes,instrument,note,volume)
    --if volume == 128 or volume == 255 then
    if notes[instrument] == nil then
@@ -177,8 +238,13 @@ local function get_notes_in_song(notes)
    local ticks_test, retrigger
 
    local instrument, note, volume
+   --print (nb_tracks)
 
    for track_index = 1,nb_tracks do
+      --local start_time
+      --print('track:'..tostring(track_index))
+      --start_time = os.clock()
+
       for pos, line in renoise.song().pattern_iterator:lines_in_track(track_index) do
 	 if not line.is_empty then
 	    for _,column in pairs(line.note_columns) do
@@ -194,7 +260,12 @@ local function get_notes_in_song(notes)
 		  --]]
 		  volume = math.min(volume,127)
 		  add_note_to_notes(notes,instrument,note,volume)
+		  --OneShotIdleNotifier(100, add_note_to_notes,notes,instrument,note,volume)
 	       end
+
+
+
+
 	       if not line.effect_columns.is_empty then
 		  for _,fx in pairs(line.effect_columns) do
 		     if not fx.is_empty then
@@ -202,19 +273,26 @@ local function get_notes_in_song(notes)
 			if ticks_test ~= nil then
 			   ticks_per_line = ticks_test
 			end
+			--OneShotIdleNotifier(100,get_retrigger_vols,fx,volume,ticks_per_line)
 			retrigger = get_retrigger_vols(fx,volume,ticks_per_line)
 			if retrigger ~= nil then
 			   for _,retrig_volume in pairs(retrigger) do
 			      --print('retrigger_volume:'..tostring(retrig_volume))
 			      add_note_to_notes(notes,instrument,note,retrig_volume)
+			      --OneShotIdleNotifier(100, add_note_to_notes,notes,instrument,note,retrig_volume)
 			   end
 			end
 		     end
 		  end
 	       end
+
+
+
 	    end
 	 end
       end
+      --print(os.clock() - start_time)
+
    end
    return notes
 end
@@ -342,7 +420,8 @@ local function delete_all_unused_samples()
 
    --print '------------'
    
-   get_notes_in_song(notes_in_song)
+   OneShotIdleNotifier(1, get_notes_in_song,notes_in_song)
+   --get_notes_in_song(notes_in_song)
    --local start_time
    --start_time = os.clock()
    --handle_retriggers(notes_in_song)
@@ -363,6 +442,7 @@ local function delete_all_unused_samples()
    --print(os.clock() - start_time)
    
    report(deleted)
+   print('done')
 end
 --------------------------------------------------------------------------------
 -- Menu entries
