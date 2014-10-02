@@ -420,8 +420,8 @@ local function delete_all_unused_samples()
 
    --print '------------'
    
-   OneShotIdleNotifier(1, get_notes_in_song,notes_in_song)
-   --get_notes_in_song(notes_in_song)
+   --OneShotIdleNotifier(1, get_notes_in_song,notes_in_song)
+   get_notes_in_song(notes_in_song)
    --local start_time
    --start_time = os.clock()
    --handle_retriggers(notes_in_song)
