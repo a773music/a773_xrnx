@@ -1,3 +1,4 @@
+* tool is taking too long -> subprocess.yield()
 * test retrigger 
 * remove mappings as well
 * de-cripple
