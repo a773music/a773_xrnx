@@ -2,5 +2,4 @@
 * remove mappings as well
 * de-cripple
 * note-off layers?????
-* move tool to sample menu
 * also: delete unused samples in only elected instrument
