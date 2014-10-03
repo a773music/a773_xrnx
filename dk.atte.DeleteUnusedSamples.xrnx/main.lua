@@ -378,8 +378,8 @@ local function delete_all_unused_samples()
       end
    end
    
+   renoise.app():show_status('')
    report(deleted)
-   print('done')
 end
 
 
@@ -474,11 +474,9 @@ end
 --------------------------------------------------------------------------------
 
 renoise.tool():add_menu_entry {
-   name = "Main Menu:Tools:"..tool_name.."...",
+   --name = "Main Menu:Tools:"..tool_name.."...",
+   name = "Instrument Box:"..tool_name.." (All Samples)",
    invoke = start_slicer
-   
-
-   --invoke = delete_all_unused_samples
 }
 
 
