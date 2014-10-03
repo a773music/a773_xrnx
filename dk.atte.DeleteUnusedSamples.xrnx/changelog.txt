@@ -1,7 +1,7 @@
 --- Version 0.13 - 2014-10-03 ---
 * fixed divide-by-zero bug (when y=0)
 * sliced tool to keep long processes alive
-* moved to instrumetn box
+* moved to instrument box
 * shows progress in status bar
 
 --- Version 0.12 - 2014-10-02 ---
