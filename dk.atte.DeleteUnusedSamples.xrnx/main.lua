@@ -30,62 +30,6 @@ local tool_id = manifest:property("Id").value
 
 
 
--- delay a function call by the given amount of time into a tools idle notifier
---
--- for example: ´OneShotIdleNotifier(100, my_callback, some_arg, another_arg)´
--- calls "my_callback" with the given arguments with a delay of about 100 ms
--- a delay of 0 will call the callback "as soon as possible" in idle, but never
--- immediately
-
-class "OneShotIdleNotifier"
-
-function OneShotIdleNotifier:__init(delay_in_ms, callback, ...)
-   assert(type(delay_in_ms) == "number" and delay_in_ms >= 0.0)
-   assert(type(callback) == "function")
-
- self._callback = callback
- self._args = arg
-   self._invoke_time = os.clock() + delay_in_ms / 1000
-
-   renoise.tool().app_idle_observable:add_notifier(self, self.__on_idle)
-end
-
-function OneShotIdleNotifier:__on_idle()
-   if (os.clock() >= self._invoke_time) then
-      renoise.tool().app_idle_observable:remove_notifier(self, self.__on_idle)
-      self._callback(unpack(self._args))
-   end
-end
-
-
-
-
-
-
---[[
-
-function tracks_changed(notification)
-   if (notification.type == "insert") then
-      OneShotIdleNotifier(0, function()
-				for i = 1, #renoise.song().sequencer.pattern_sequence - 1 do
-				   renoise.song().sequencer:set_track_sequence_slot_is_muted(notification.index , i, true)
-				end
-			     end)
-   end
-end
-
-
-
---]]
-
-
-
-
-
-
-
-
-
 
 
 
@@ -156,12 +100,16 @@ local function get_retrigger_vols(col,vol,ticks_per_line)
 
    local x = tonumber(string.sub(col_string,3,3),16)
    local y = tonumber(string.sub(col_string,4),16)
+   if y == 0 then
+      return
+   end
+   
    local nb_retrigs = ticks_per_line / y
    
    local vols = {}
 
    if x == 0 or x == 8 then
-      return 
+      return
    elseif x== 1 then
       for i = 1,(nb_retrigs-1) do
 	 vols[i] = round(vol - (i * 127/32))
@@ -220,8 +168,6 @@ local function get_retrigger_vols(col,vol,ticks_per_line)
       end
    end
    
-   --print('vols:')
-   --rprint(vols)
    return vols
 end
 
@@ -238,13 +184,12 @@ local function get_notes_in_song(notes)
    local ticks_test, retrigger
 
    local instrument, note, volume
-   --print (nb_tracks)
+
+   local start_time
+   start_time = os.clock()
+
 
    for track_index = 1,nb_tracks do
-      --local start_time
-      --print('track:'..tostring(track_index))
-      --start_time = os.clock()
-
       for pos, line in renoise.song().pattern_iterator:lines_in_track(track_index) do
 	 if not line.is_empty then
 	    for _,column in pairs(line.note_columns) do
@@ -253,14 +198,8 @@ local function get_notes_in_song(notes)
 		  instrument = column.instrument_value + 1
 		  note = column.note_value
 		  volume = column.volume_value
-		  --[[
-		  if volume == 255 or volume == 128 then
-		     volume = 127
-		  end
-		  --]]
 		  volume = math.min(volume,127)
 		  add_note_to_notes(notes,instrument,note,volume)
-		  --OneShotIdleNotifier(100, add_note_to_notes,notes,instrument,note,volume)
 	       end
 
 
@@ -273,25 +212,33 @@ local function get_notes_in_song(notes)
 			if ticks_test ~= nil then
 			   ticks_per_line = ticks_test
 			end
-			--OneShotIdleNotifier(100,get_retrigger_vols,fx,volume,ticks_per_line)
 			retrigger = get_retrigger_vols(fx,volume,ticks_per_line)
 			if retrigger ~= nil then
 			   for _,retrig_volume in pairs(retrigger) do
-			      --print('retrigger_volume:'..tostring(retrig_volume))
 			      add_note_to_notes(notes,instrument,note,retrig_volume)
-			      --OneShotIdleNotifier(100, add_note_to_notes,notes,instrument,note,retrig_volume)
 			   end
 			end
 		     end
 		  end
 	       end
 
+	       if os.clock() - start_time > .5 then
+		  renoise.app():show_status('Delete unused samples: processing track '..tostring(track_index))
+
+		  coroutine.yield()
+		  start_time = os.clock()
+	       end
 
 
 	    end
+
+
+
+
+
 	 end
+	 
       end
-      --print(os.clock() - start_time)
 
    end
    return notes
@@ -418,17 +365,8 @@ local function delete_all_unused_samples()
    local deleted = {}
    local nb_deleted
 
-   --print '------------'
-   
-   --OneShotIdleNotifier(1, get_notes_in_song,notes_in_song)
    get_notes_in_song(notes_in_song)
-   --local start_time
-   --start_time = os.clock()
-   --handle_retriggers(notes_in_song)
-   --print(os.clock() - start_time)
-   
-   
-   --start_time = os.clock()
+
    for i, instrument in pairs(renoise.song().instruments) do
       nb_deleted = delete_unused_samples(i,instrument,notes_in_song)
       if nb_deleted > 0 then
@@ -439,18 +377,108 @@ local function delete_all_unused_samples()
 	 end
       end
    end
-   --print(os.clock() - start_time)
    
    report(deleted)
    print('done')
 end
+
+
+
+
+
+class "ProcessSlicer"
+
+function ProcessSlicer:__init(process_func, ...)
+  assert(type(process_func) == "function", 
+    "expected a function as first argument")
+
+  self.__process_func = process_func
+  self.__process_func_args = arg
+  self.__process_thread = nil
+end
+
+
+--------------------------------------------------------------------------------
+-- returns true when the current process currently is running
+
+function ProcessSlicer:running()
+  return (self.__process_thread ~= nil)
+end
+
+
+--------------------------------------------------------------------------------
+-- start a process
+
+function ProcessSlicer:start()
+  assert(not self:running(), "process already running")
+  
+  self.__process_thread = coroutine.create(self.__process_func)
+  
+  renoise.tool().app_idle_observable:add_notifier(
+    ProcessSlicer.__on_idle, self)
+end
+
+
+--------------------------------------------------------------------------------
+-- stop a running process
+
+function ProcessSlicer:stop()
+  assert(self:running(), "process not running")
+
+  renoise.tool().app_idle_observable:remove_notifier(
+    ProcessSlicer.__on_idle, self)
+
+  self.__process_thread = nil
+end
+
+
+--------------------------------------------------------------------------------
+
+-- function that gets called from Renoise to do idle stuff. switches back 
+-- into the processing function or detaches the thread
+
+function ProcessSlicer:__on_idle()
+  assert(self.__process_thread ~= nil, "ProcessSlicer internal error: "..
+    "expected no idle call with no thread running")
+  
+  -- continue or start the process while its still active
+  if (coroutine.status(self.__process_thread) == 'suspended') then
+    local succeeded, error_message = coroutine.resume(
+      self.__process_thread, unpack(self.__process_func_args))
+    
+    if (not succeeded) then
+      -- stop the process on errors
+      self:stop()
+      -- and forward the error to the main thread
+      error(error_message) 
+    end
+    
+  -- stop when the process function completed
+  elseif (coroutine.status(self.__process_thread) == 'dead') then
+    self:stop()
+  end
+end
+
+
+local slicer = ProcessSlicer(delete_all_unused_samples)
+
+
+local function start_slicer()
+   slicer:start()
+end
+
+
+
 --------------------------------------------------------------------------------
 -- Menu entries
 --------------------------------------------------------------------------------
 
 renoise.tool():add_menu_entry {
    name = "Main Menu:Tools:"..tool_name.."...",
-   invoke = delete_all_unused_samples
+   invoke = start_slicer
+   
+
+   --invoke = delete_all_unused_samples
 }
 
 
