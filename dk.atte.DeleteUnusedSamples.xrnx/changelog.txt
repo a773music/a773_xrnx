@@ -1,3 +1,6 @@
+--- Version 0.14 - 2014-12-18 ---
+* fixed hang when deleting lots of samples
+
 --- Version 0.13 - 2014-10-03 ---
 * fixed divide-by-zero bug (when y=0)
 * sliced tool to keep long processes alive

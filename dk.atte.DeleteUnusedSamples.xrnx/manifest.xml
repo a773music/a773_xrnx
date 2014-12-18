@@ -2,7 +2,7 @@
 <RenoiseScriptingTool doc_version="0">
   <Name>DeleteUnusedSamples</Name>
   <Id>dk.atte.DeleteUnusedSamples</Id>
-  <Version>0.13</Version>
+  <Version>0.14</Version>
   <ApiVersion>4</ApiVersion>
   <Author>Atte André Jensen | atte.jensen@gmail.com</Author>
   <AutoUpgraded>false</AutoUpgraded>

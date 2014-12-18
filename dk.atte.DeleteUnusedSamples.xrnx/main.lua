@@ -28,13 +28,6 @@ local tool_name = manifest:property("Name").value
 local tool_id = manifest:property("Id").value
 
 
-
-
-
-
-
-
-
 local function add_note_to_notes(notes,instrument,note,volume)
    --if volume == 128 or volume == 255 then
    if notes[instrument] == nil then
@@ -297,6 +290,11 @@ local function delete_unused_samples(instrument_nb, instrument, notes_in_song)
       return 0
    end
    
+   local start_time
+   start_time = os.clock()
+
+
+
    
    for i, map in pairs(instrument.sample_mappings) do
       if #map > 0 then
@@ -305,7 +303,12 @@ local function delete_unused_samples(instrument_nb, instrument, notes_in_song)
 	       if not map_in(instrument_nb,one_map,notes_in_song) and one_map.sample.sample_buffer.has_sample_data then
 		  one_map.sample:clear()
 		  deleted = deleted + 1
-		  --renoise.song().instruments:delete_sample_mapping_at('LAYER_NOTE_ON', i)
+		  if os.clock() - start_time > .5 then
+		     renoise.app():show_status('Delete unused samples: deleting samples...')
+		     coroutine.yield()
+		     start_time = os.clock()
+		  end
+
 	       end
 	    end
 	 end
@@ -366,6 +369,8 @@ local function delete_all_unused_samples()
    local nb_deleted
 
    get_notes_in_song(notes_in_song)
+
+
 
    for i, instrument in pairs(renoise.song().instruments) do
       nb_deleted = delete_unused_samples(i,instrument,notes_in_song)
