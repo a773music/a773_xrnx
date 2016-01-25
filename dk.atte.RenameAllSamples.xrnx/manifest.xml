@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RenoiseScriptingTool doc_version="0">
+  <Name>RenameAllSamples</Name>
+  <Id>dk.atte.RenameAllSamples</Id>
+  <Version>0.1</Version>
+  <ApiVersion>5</ApiVersion>
+  <Author>Atte André Jensen | atte.jensen@gmail.com</Author>
+  <AutoUpgraded>false</AutoUpgraded>
+  <Category>In Progress</Category>
+  <Description>Rename all samples in instrument to the name of the instrument + _01, _02 etc</Description>
+  <Homepage>http://tools.renoise.com</Homepage>
+  <Platform/>
+  <Icon/>
+</RenoiseScriptingTool>
