@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RenoiseScriptingTool doc_version="0">
-  <Name>RandStack</Name>
+  <ApiVersion>5</ApiVersion>
+  <AutoUpgraded>true</AutoUpgraded>
   <Id>dk.atte.RandStack</Id>
-  <Version>0.1</Version>
-  <ApiVersion>4</ApiVersion>
+  <Version>0.10000000000000001</Version>
   <Author>Atte André Jensen | atte.jensen@gmail.com</Author>
-  <AutoUpgraded>false</AutoUpgraded>
+  <Name>RandStack</Name>
   <Category>In Progress</Category>
   <Description>Stack all samples from an instrument on one key and make them trigger randomly</Description>
   <Homepage>http://tools.renoise.com</Homepage>
-  <Platform/>
-  <Icon/>
 </RenoiseScriptingTool>

@@ -1,7 +1,8 @@
 #!/bin/bash
 hackFile=~/renderHack
-renoise='renoise'
 #renoise='renoise-2.7.2'
+#renoise='renoise'
+renoise=/usr/local/bin/renoise
 
 
 
@@ -13,6 +14,7 @@ fi
 last_arg="${@: -1}"
 
 for file in "$@"; do
+    switch_renoise_backend alsa
     if [ ! -f "$file" ]; then
 	echo file "$file" doesnt exist, skipping...
 	continue
@@ -27,9 +29,6 @@ for file in "$@"; do
     xrns=`pwd`/"$file"
     wav=`echo $xrns | sed s/xrns$/wav/g`
 
-    #echo $xrns
-    #exit
-
     $renoise "$xrns" &
     while [ -f $hackFile ]; do
 	sleep 1
@@ -43,13 +42,15 @@ for file in "$@"; do
 
 
 #    while [ -n "`ps aux | grep renoise | grep -v renoiseRender | grep -v grep`" ]; do
-	killall renoise
-	sleep 1
-	killall -HUP renoise
+
+    killall -16 renoise
+    killall -9 renoise
+    killall -15 renoise
+    killall renoise
+    killall -HUP renoise
 #	sleep 1
 #    done
-
-
+    sleep 1
     if [ -d "$last_arg" ]; then
 	outdir=$(readlink -f "$last_arg")/
 	mv "$wav" $outdir

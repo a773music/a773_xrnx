@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RenoiseScriptingTool doc_version="0">
-  <Name>DeleteUnusedSamples</Name>
+  <ApiVersion>5</ApiVersion>
+  <AutoUpgraded>true</AutoUpgraded>
   <Id>dk.atte.DeleteUnusedSamples</Id>
-  <Version>0.14</Version>
-  <ApiVersion>4</ApiVersion>
+  <Version>0.14000000000000001</Version>
   <Author>Atte André Jensen | atte.jensen@gmail.com</Author>
-  <AutoUpgraded>false</AutoUpgraded>
+  <Name>DeleteUnusedSamples</Name>
   <Category>In Progress</Category>
   <Description>Delete unused samples from song</Description>
   <Homepage>http://github.com/attejensen/xrnx</Homepage>
-  <Platform/>
-  <Icon/>
 </RenoiseScriptingTool>
