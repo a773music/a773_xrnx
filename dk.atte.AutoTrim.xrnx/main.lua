@@ -27,7 +27,7 @@ local ok,err = manifest:load_from("manifest.xml")
 local tool_name = manifest:property("Name").value
 local tool_id = manifest:property("Id").value
 
-local threshold = 0.005
+local threshold
 local work_on
 
 --------------------------------------------------------------------------------
@@ -287,6 +287,10 @@ end
 --------------------------------------------------------------------------------
 
 local function trim_dialog(work_on)
+   --renoise.song():describe_undo('Auto')
+
+   threshold = 0.005
+   
   -- This block makes sure a non-modal dialog is shown once.
   -- If the dialog is already opened, it will be focused.
   if dialog and dialog.visible then
@@ -315,13 +319,6 @@ local function trim_dialog(work_on)
     if (choice == buttons[1]) then
        threshold = tonumber(vb.views.threshold.text)
        start_slicer()
-       --[[
-       if work_on == 'sample' then
-	  trim_sample()
-       else
-	  trim_instrument()
-       end
-       --]]	  
     end
 
 end
