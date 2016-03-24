@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RenoiseScriptingTool doc_version="0">
+  <Name>AutoTrim</Name>
+  <Id>dk.atte.AutoTrim</Id>
+  <Version>1</Version>
+  <ApiVersion>5</ApiVersion>
+  <Author>Atte André Jensen | atte.jensen@gmail.com</Author>
+  <AutoUpgraded>false</AutoUpgraded>
+  <Category>In Progress</Category>
+  <Description>Trim silence of the beginning and end of sample(s)</Description>
+  <Homepage>http://tools.renoise.com</Homepage>
+  <Platform/>
+  <Icon/>
+</RenoiseScriptingTool>
